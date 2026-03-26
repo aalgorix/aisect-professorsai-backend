@@ -1,0 +1,184 @@
+[
+  {
+    "course_id": 1,
+    "course_title": "Management Process and Organizational behaviour",
+    "weeks": [
+      {
+        "week_number": 1,
+        "week_title": "Introduction to Management",
+        "topics": [
+          {
+            "topic_id": 1,
+            "topic_title": "Definitions of Management"
+          },
+          {
+            "topic_id": 2,
+            "topic_title": "Nature and Characteristics of Management"
+          },
+          {
+            "topic_id": 3,
+            "topic_title": "Importance of Management"
+          }
+        ]
+      },
+      {
+        "week_number": 2,
+        "week_title": "Functions of Management",
+        "topics": [
+          {
+            "topic_id": 4,
+            "topic_title": "Planning"
+          },
+          {
+            "topic_id": 5,
+            "topic_title": "Organizing"
+          },
+          {
+            "topic_id": 6,
+            "topic_title": "Staffing"
+          },
+          {
+            "topic_id": 7,
+            "topic_title": "Directing"
+          },
+          {
+            "topic_id": 8,
+            "topic_title": "Controlling"
+          }
+        ]
+      },
+      {
+        "week_number": 3,
+        "week_title": "Management as Science, Art, and Profession",
+        "topics": [
+          {
+            "topic_id": 9,
+            "topic_title": "Management as a Science"
+          },
+          {
+            "topic_id": 10,
+            "topic_title": "Management as an Art"
+          },
+          {
+            "topic_id": 11,
+            "topic_title": "Management as a Profession"
+          }
+        ]
+      },
+      {
+        "week_number": 4,
+        "week_title": "Levels of Management",
+        "topics": [
+          {
+            "topic_id": 12,
+            "topic_title": "Top-level Management"
+          },
+          {
+            "topic_id": 13,
+            "topic_title": "Middle-level Management"
+          },
+          {
+            "topic_id": 14,
+            "topic_title": "Lower-level/First-line Management"
+          }
+        ]
+      },
+      {
+        "week_number": 5,
+        "week_title": "Development of Management Thought",
+        "topics": [
+          {
+            "topic_id": 15,
+            "topic_title": "Classical Theory"
+          },
+          {
+            "topic_id": 16,
+            "topic_title": "Neo-classical Theory"
+          },
+          {
+            "topic_id": 17,
+            "topic_title": "Various Approaches to Management"
+          }
+        ]
+      },
+      {
+        "week_number": 6,
+        "week_title": "Human Resource Management",
+        "topics": [
+          {
+            "topic_id": 18,
+            "topic_title": "Introduction to Human Resource Management"
+          },
+          {
+            "topic_id": 19,
+            "topic_title": "Manpower Planning"
+          },
+          {
+            "topic_id": 20,
+            "topic_title": "Recruitment and Selection"
+          }
+        ]
+      },
+      {
+        "week_number": 7,
+        "week_title": "Organizational Behaviour",
+        "topics": [
+          {
+            "topic_id": 21,
+            "topic_title": "Introduction to Organizational Behaviour"
+          },
+          {
+            "topic_id": 22,
+            "topic_title": "Foundation of Individual Behaviour"
+          }
+        ]
+      },
+      {
+        "week_number": 8,
+        "week_title": "Motivation and Leadership",
+        "topics": [
+          {
+            "topic_id": 23,
+            "topic_title": "Motivation"
+          },
+          {
+            "topic_id": 24,
+            "topic_title": "Leadership"
+          }
+        ]
+      },
+      {
+        "week_number": 9,
+        "week_title": "Corporate Social Responsibility and Ethics",
+        "topics": [
+          {
+            "topic_id": 25,
+            "topic_title": "Social Responsibility"
+          },
+          {
+            "topic_id": 26,
+            "topic_title": "Managerial and Business Ethics"
+          },
+          {
+            "topic_id": 27,
+            "topic_title": "Code of Ethics"
+          }
+        ]
+      },
+      {
+        "week_number": 10,
+        "week_title": "Contemporary Management Practices",
+        "topics": [
+          {
+            "topic_id": 28,
+            "topic_title": "Management by Objectives"
+          },
+          {
+            "topic_id": 29,
+            "topic_title": "Management by Exception"
+          }
+        ]
+      }
+    ]
+  }
+]

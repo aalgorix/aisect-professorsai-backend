@@ -1,0 +1,278 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: profai-api
+  namespace: profai
+  labels:
+    app: profai
+    component: api
+spec:
+  replicas: 5  # COST OPTIMIZED: Start with 5, auto-scale up to 30 (was 10-50)
+  selector:
+    matchLabels:
+      app: profai
+      component: api
+  template:
+    metadata:
+      labels:
+        app: profai
+        component: api
+    spec:
+      # Ensure API pods run on on-demand nodes only (stable)
+      tolerations:
+      - key: workload
+        operator: Equal
+        value: api
+        effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: role
+                operator: In
+                values:
+                - api
+        podAntiAffinity:  # Spread pods across nodes for HA
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values:
+                  - api
+              topologyKey: kubernetes.io/hostname
+      
+      containers:
+      - name: api
+        image: profai:latest
+        command: ["python", "run_profai_websocket_celery.py"]  # Uses Celery version
+        
+        ports:
+        - containerPort: 5001
+          name: http
+          protocol: TCP
+        - containerPort: 8765
+          name: websocket
+          protocol: TCP
+        
+        env:
+        # Redis Labs Cloud connection
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: profai-secrets
+              key: REDIS_URL
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: profai-config
+              key: REDIS_HOST
+        - name: REDIS_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: profai-config
+              key: REDIS_PORT
+        - name: REDIS_USERNAME
+          valueFrom:
+            configMapKeyRef:
+              name: profai-config
+              key: REDIS_USERNAME
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: profai-secrets
+              key: REDIS_PASSWORD
+        - name: REDIS_DB
+          valueFrom:
+            configMapKeyRef:
+              name: profai-config
+              key: REDIS_DB
+        - name: REDIS_USE_SSL
+          valueFrom:
+            configMapKeyRef:
+              name: profai-config
+              key: REDIS_USE_SSL
+        
+        # Server config
+        - name: HOST
+          value: "0.0.0.0"
+        - name: PORT
+          value: "5001"
+        - name: DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: profai-config
+              key: DEBUG
+        
+        # API Keys from secrets
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: profai-secrets
+              key: OPENAI_API_KEY
+        - name: SARVAM_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: profai-secrets
+              key: SARVAM_API_KEY
+        - name: GROQ_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: profai-secrets
+              key: GROQ_API_KEY
+        - name: ELEVENLABS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: profai-secrets
+              key: ELEVENLABS_API_KEY
+              optional: true
+        
+        # ChromaDB Cloud
+        - name: USE_CHROMA_CLOUD
+          valueFrom:
+            configMapKeyRef:
+              name: profai-config
+              key: USE_CHROMA_CLOUD
+        - name: CHROMA_CLOUD_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: profai-secrets
+              key: CHROMA_CLOUD_API_KEY
+              optional: true
+        - name: CHROMA_CLOUD_TENANT
+          valueFrom:
+            configMapKeyRef:
+              name: profai-config
+              key: CHROMA_CLOUD_TENANT
+              optional: true
+        - name: CHROMA_CLOUD_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: profai-config
+              key: CHROMA_CLOUD_DATABASE
+              optional: true
+        
+        # Database
+        - name: USE_DATABASE
+          valueFrom:
+            configMapKeyRef:
+              name: profai-config
+              key: USE_DATABASE
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: profai-secrets
+              key: DATABASE_URL
+              optional: true
+        
+        # Resource limits - OPTIMIZED for cost while maintaining performance
+        resources:
+          requests:
+            memory: "768Mi"  # Reduced from 1Gi (allows more pods per node)
+            cpu: "400m"  # Reduced from 500m (still plenty for API)
+          limits:
+            memory: "1536Mi"  # Reduced from 2Gi (prevents memory waste)
+            cpu: "800m"  # Reduced from 1000m (burst capacity still available)
+        
+        # Persistent storage (read-only for API)
+        volumeMounts:
+        - name: data
+          mountPath: /app/data
+          readOnly: false  # Needs write for course files (for now)
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5001
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 2
+        
+        # Graceful shutdown
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 10"]
+      
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: profai-pvc
+
+---
+# Horizontal Pod Autoscaler for API
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: profai-api-hpa
+  namespace: profai
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: profai-api
+  minReplicas: 5  # COST OPTIMIZED: Reduced from 10
+  maxReplicas: 30  # COST OPTIMIZED: Reduced from 50 (still handles 5,000+ users)
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 50  # Add 50% more pods
+        periodSeconds: 15
+      - type: Pods
+        value: 5  # Or add 5 pods
+        periodSeconds: 15
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Wait 5 min before scaling down
+      policies:
+      - type: Percent
+        value: 25  # Remove 25%
+        periodSeconds: 60
+      - type: Pods
+        value: 2  # Or remove 2 pods
+        periodSeconds: 60
+      selectPolicy: Min
+
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: profai-api-pdb
+  namespace: profai
+spec:
+  minAvailable: 3  # COST OPTIMIZED: Keep at least 3 API pods (was 5)
+  selector:
+    matchLabels:
+      app: profai
+      component: api
